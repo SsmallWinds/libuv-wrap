@@ -2,13 +2,18 @@
 
 using namespace net;
 
-TcpClient::TcpClient(EventLoop* loop, const std::string& name) : m_loop(loop)
+TcpClient::TcpClient(EventLoop* loop, const std::string& name) :
+	m_loop(loop), m_name(name), m_tcp(), m_connectReq(), m_shutdownReq(), m_writeReq(),
+	m_state(StateE::kConnecting)
 {
-	m_name = name;
 }
 
-int TcpClient::send(const char* data, int len)
+void TcpClient::send(const char* data, int len)
 {
+	if (m_state != StateE::kConnected)
+	{
+		return;
+	}
 	StringPiece sp(data, len);
 	if (m_loop->isInLoop())
 	{
@@ -18,7 +23,6 @@ int TcpClient::send(const char* data, int len)
 	{
 		m_loop->runInLoop(std::bind(&TcpClient::sendInLoop, this, sp.as_string()));
 	}
-	return 0;
 }
 
 int TcpClient::connect(const char* ip, int port)
@@ -52,6 +56,7 @@ void TcpClient::onClose(uv_handle_t* handle)
 {
 	auto* client = static_cast<TcpClient*>(handle->data);
 	client->m_closeCallBack(client->shared_from_this());
+	client->m_state = StateE::kDisconnected;
 }
 
 void TcpClient::onRead(uv_stream_t* tcp, ssize_t nread, const uv_buf_t* buf)
@@ -83,6 +88,7 @@ void TcpClient::onConnect(uv_connect_t* connect, int status)
 		uv_close(reinterpret_cast<uv_handle_t*>(connect->handle), onClose);
 		return;
 	}
+	client->m_state = StateE::kConnected;
 	client->m_connectionCallback(client->shared_from_this());
 }
 
@@ -96,9 +102,17 @@ void TcpClient::onWriteDone(uv_write_t* req, int status)
 
 void TcpClient::sendInLoop(const StringPiece& message)
 {
+	if (m_state != StateE::kConnected)
+	{
+		return;
+	}
 	int res = 0;
 	uv_buf_t buf;
 	buf.base = const_cast<char*>(message.data());
 	buf.len = message.size();
-	uv_write(&m_writeReq, reinterpret_cast<uv_stream_t*>(&m_tcp), &buf, 1, onWriteDone);
+	res = uv_write(&m_writeReq, reinterpret_cast<uv_stream_t*>(&m_tcp), &buf, 1, onWriteDone);
+	if (res != 0) 
+	{
+		uv_close(reinterpret_cast<uv_handle_t*>(&m_tcp), onClose);
+	}
 }

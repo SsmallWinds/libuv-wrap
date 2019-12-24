@@ -14,7 +14,7 @@ namespace net
 	{
 	public:
 		TcpClient(EventLoop* loop, const std::string& name = "client");
-		int send(const char* data, int len);
+		void send(const char* data, int len);
 		int connect(const char* ip, int port);
 
 		void setConnectionCallback(ConnectionCallback cb)
@@ -36,6 +36,7 @@ namespace net
 		}
 
 	private:
+		enum class StateE { kDisconnected, kConnecting, kConnected, kDisconnecting };
 		static void allocCb(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf);
 		static void onClose(uv_handle_t* handle);
 		static void onRead(uv_stream_t* tcp, ssize_t nread, const uv_buf_t* buf);
@@ -54,5 +55,6 @@ namespace net
 		ConnectionCallback m_connectionCallback;
 		MessageCallback m_messageCallback;
 		CloseCallback m_closeCallBack;
+		StateE m_state;
 	};
 }; // namespace net
