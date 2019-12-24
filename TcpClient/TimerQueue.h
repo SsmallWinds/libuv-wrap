@@ -1,13 +1,14 @@
 #pragma once
-#include "EventLoop.h"
 #include "base/CallBacks.h"
 #include <map>
 #include <atomic>
 #include <memory>
+#include <uv.h>
 
 namespace net {
 
 	class TimerQueue;
+	class EventLoop;
 	struct timer
 	{
 		int64_t timeId;

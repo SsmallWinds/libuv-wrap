@@ -4,6 +4,7 @@
 #include <uv.h>
 #include <thread>
 #include <vector>
+#include "TimerQueue.h"
 
 namespace net
 {
@@ -29,6 +30,19 @@ namespace net
 			}
 		}
 
+		int64_t runAfter(int64_t delay, TimerCallback& cb) 
+		{
+			return m_timer.runAfter(delay, cb);
+		}
+		int64_t runEvery(int64_t repeat, TimerCallback& cb) 
+		{
+			return m_timer.runEvery(repeat, cb);
+		}
+		void cancel(int64_t timeId) 
+		{
+			m_timer.cancel(timeId);
+		}
+
 	private:
 		static void onAsync(uv_async_t* handle);
 		void queueInLoop(Functor cb);
@@ -40,5 +54,6 @@ namespace net
 		uv_async_t m_async;
 		std::mutex m_mutex;
 		std::vector<Functor> m_funcs;
+		TimerQueue m_timer;
 	};
 } // namespace net

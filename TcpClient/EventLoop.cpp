@@ -7,7 +7,7 @@ namespace
 	thread_local net::EventLoop* t_loopInThisThread = 0;
 } // namespace
 
-EventLoop::EventLoop(uv_loop_t* loop) : m_loop(loop), m_async()
+EventLoop::EventLoop(uv_loop_t* loop) : m_loop(loop), m_async(),m_timer(this)
 {
 	if (t_loopInThisThread == 0)
 	{

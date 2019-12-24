@@ -7,7 +7,6 @@ using namespace net;
 
 EventLoop* loop;
 TcpClientPtr client;
-TimerQueue* tq;
 
 void on_timer()
 {
@@ -32,7 +31,7 @@ void on_connected(const TcpClientPtr& client)
 	client->send("hello", 6);
 
 	TimerCallback fun = std::bind(on_timer);
-	tq->runEvery(2000, fun);
+	loop->runEvery(2000, fun);
 }
 
 int main()
@@ -40,7 +39,6 @@ int main()
 	cout << "hello" << endl;
 	loop = new EventLoop(uv_default_loop());
 	client = make_shared<TcpClient>(loop);
-	tq = new TimerQueue(loop);
 
 	client->setMessageCallback(on_msg);
 	client->setConnectionCallback(on_connected);
