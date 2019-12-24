@@ -51,7 +51,7 @@ namespace net
 #ifdef __GNUC__
 		return htobe32(host32);
 #else
-		htonl(host32);
+		return htonl(host32);
 #endif
 	}
 
@@ -60,7 +60,7 @@ namespace net
 #ifdef __GNUC__
 		return htobe16(host16);
 #else
-		htons(host16);
+		return htons(host16);
 #endif
 	}
 
@@ -89,7 +89,7 @@ namespace net
 #ifdef __GNUC__
 		return be32toh(net32);
 #else
-		ntohl(net32);
+		return ntohl(net32);
 #endif
 	}
 
@@ -98,7 +98,7 @@ namespace net
 #ifdef __GNUC__
 		return be16toh(net16);
 #else
-		ntohs(net16);
+		return ntohs(net16);
 #endif
 	}
 
