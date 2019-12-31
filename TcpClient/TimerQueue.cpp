@@ -19,8 +19,7 @@ int64_t TimerQueue::runAfter(int64_t delay, TimerCallback& cb)
 	tm->repeat = 0;
 	tm->cb = std::move(cb);
 	tm->queue = this;
-	m_timers.emplace(std::make_pair(tm->timeId, std::unique_ptr<timer>(tm)));
-	addTimerInLoop(tm);
+	m_loop->runInLoop(std::bind(&TimerQueue::addTimerInLoop, this, tm));
 	return tm->timeId;
 }
 
@@ -32,8 +31,7 @@ int64_t TimerQueue::runEvery(int64_t repeat, TimerCallback& cb)
 	tm->repeat = repeat;
 	tm->cb = std::move(cb);
 	tm->queue = this;
-	m_timers.emplace(std::make_pair(tm->timeId, std::unique_ptr<timer>(tm)));
-	addTimerInLoop(tm);
+	m_loop->runInLoop(std::bind(&TimerQueue::addTimerInLoop, this, tm));
 	return tm->timeId;
 }
 

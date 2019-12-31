@@ -9,14 +9,6 @@ namespace
 
 EventLoop::EventLoop(uv_loop_t* loop) : m_loop(loop), m_async(),m_timer(this)
 {
-	if (t_loopInThisThread == 0)
-	{
-		t_loopInThisThread = this;
-	}
-	else
-	{
-		assert(0);
-	}
 }
 
 int EventLoop::init()
@@ -28,6 +20,14 @@ int EventLoop::init()
 
 void EventLoop::doLoop()
 {
+	if (t_loopInThisThread == 0)
+	{
+		t_loopInThisThread = this;
+	}
+	else
+	{
+		assert(0);
+	}
 	m_tid = std::this_thread::get_id();
 	uv_run(m_loop, UV_RUN_DEFAULT);
 }
