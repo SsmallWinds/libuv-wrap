@@ -34,8 +34,8 @@ void on_connected(const TcpClientPtr& client)
 	for (int i = 0; i < 100; i++) {
 		auto t = new thread([client, i]()
 		{
-			std::string* msg = new std::string("msg" + to_string(i) + "\n");
-			client->send(msg->c_str(), msg->size() + 1);
+			std::string msg("msg" + to_string(i) + "\n");
+			client->send(msg.c_str(), msg.size() + 1);
 		});
 		t->detach();
 	}

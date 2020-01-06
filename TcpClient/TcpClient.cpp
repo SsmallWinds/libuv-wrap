@@ -113,7 +113,6 @@ void TcpClient::sendInLoop(const StringPiece& message)
 	uv_buf_t buf;
 	buf.base = const_cast<char*>(message.data());
 	buf.len = message.size();
-	std::cout << std::this_thread::get_id() << ":" << buf.base << std::endl;
 
 	res = uv_write(req, reinterpret_cast<uv_stream_t*>(&m_tcp), &buf, 1, onWriteDone);
 	if (res != 0)
