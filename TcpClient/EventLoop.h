@@ -22,13 +22,8 @@ namespace net
 		uv_loop_t* uvLoop();
 		bool isInLoop();
 		static EventLoop* currentLoop();
-		void assertInLoopThread()
-		{
-			if (!isInLoop())
-			{
-				//TODO::
-			}
-		}
+		void assertInLoopThread();
+
 
 		int64_t runAfter(int64_t delay, TimerCallback& cb) 
 		{

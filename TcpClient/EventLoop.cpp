@@ -7,7 +7,7 @@ namespace
 	thread_local net::EventLoop* t_loopInThisThread = 0;
 } // namespace
 
-EventLoop::EventLoop(uv_loop_t* loop) : m_loop(loop), m_async(),m_timer(this)
+EventLoop::EventLoop(uv_loop_t* loop) : m_loop(loop), m_async(), m_timer(this)
 {
 }
 
@@ -52,6 +52,15 @@ uv_loop_t* EventLoop::uvLoop()
 EventLoop* EventLoop::currentLoop()
 {
 	return t_loopInThisThread;
+}
+
+void net::EventLoop::assertInLoopThread()
+{
+	if (!isInLoop())
+	{
+		//TODO::
+		assert(0);
+	}
 }
 
 void EventLoop::onAsync(uv_async_t* handle)

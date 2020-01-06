@@ -3,17 +3,17 @@
 using namespace net;
 
 TcpClient::TcpClient(EventLoop* loop, const std::string& name) :
-	m_loop(loop), m_name(name), m_tcp(), m_connectReq(), m_shutdownReq(), m_writeReq(),
+	m_loop(loop), m_name(name), m_tcp(), m_connectReq(), m_shutdownReq(),
 	m_state(StateE::kConnecting)
 {
 }
 
 void TcpClient::send(const char* data, int len)
 {
-	if (m_state != StateE::kConnected)
-	{
-		return;
-	}
+	//if (m_state != StateE::kConnected)
+	//{
+	//	return;
+	//}
 	StringPiece sp(data, len);
 	if (m_loop->isInLoop())
 	{
@@ -96,22 +96,27 @@ void TcpClient::onWriteDone(uv_write_t* req, int status)
 {
 	if (status != 0)
 	{
-		uv_close(reinterpret_cast<uv_handle_t*>(req), onClose);
+		uv_close(reinterpret_cast<uv_handle_t*>(req->handle), onClose);
 	}
+	free(req);
 }
 
 void TcpClient::sendInLoop(const StringPiece& message)
 {
+	m_loop->assertInLoopThread();
 	if (m_state != StateE::kConnected)
 	{
 		return;
 	}
 	int res = 0;
+	auto* req = static_cast<uv_write_t*>(malloc(sizeof(uv_write_t)));
 	uv_buf_t buf;
 	buf.base = const_cast<char*>(message.data());
 	buf.len = message.size();
-	res = uv_write(&m_writeReq, reinterpret_cast<uv_stream_t*>(&m_tcp), &buf, 1, onWriteDone);
-	if (res != 0) 
+	std::cout << std::this_thread::get_id() << ":" << buf.base << std::endl;
+
+	res = uv_write(req, reinterpret_cast<uv_stream_t*>(&m_tcp), &buf, 1, onWriteDone);
+	if (res != 0)
 	{
 		uv_close(reinterpret_cast<uv_handle_t*>(&m_tcp), onClose);
 	}

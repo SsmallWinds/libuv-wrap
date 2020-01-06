@@ -1,6 +1,7 @@
 #include <iostream>
 #include "TcpClient.h"
 #include "TimerQueue.h"
+#include <thread>
 
 using namespace std;
 using namespace net;
@@ -28,10 +29,19 @@ void on_msg(const TcpClientPtr& client, Buffer* buf)
 void on_connected(const TcpClientPtr& client)
 {
 	cout << "on_connected:" << client->name() << endl;
-	client->send("hello", 6);
+	client->send("hello\n", 7);
 
-	TimerCallback fun = std::bind(on_timer);
-	loop->runEvery(2000, fun);
+	for (int i = 0; i < 100; i++) {
+		auto t = new thread([client, i]()
+		{
+			std::string* msg = new std::string("msg" + to_string(i) + "\n");
+			client->send(msg->c_str(), msg->size() + 1);
+		});
+		t->detach();
+	}
+
+	//TimerCallback fun = std::bind(on_timer);
+	//loop->runEvery(2000, fun);
 }
 
 int main()
@@ -45,5 +55,7 @@ int main()
 	client->setCloseCallback(on_close);
 
 	client->connect("127.0.0.2", 9999);
+	loop->init();
 	loop->doLoop();
+	getchar();
 }
