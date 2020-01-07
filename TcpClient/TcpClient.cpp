@@ -118,5 +118,6 @@ void TcpClient::sendInLoop(const StringPiece& message)
 	if (res != 0)
 	{
 		uv_close(reinterpret_cast<uv_handle_t*>(&m_tcp), onClose);
+		free(req);
 	}
 }
