@@ -30,7 +30,7 @@ namespace net
 			m_closeCallBack = std::move(cb);
 		}
 
-		std::string name()const 
+		std::string name()const
 		{
 			return m_name;
 		}
@@ -42,7 +42,7 @@ namespace net
 		static void onRead(uv_stream_t* tcp, ssize_t nread, const uv_buf_t* buf);
 		static void onConnect(uv_connect_t* connect, int status);
 		static void onWriteDone(uv_write_t* req, int status);
-		void sendInLoop(const StringPiece& message);
+		void sendInLoop(const char* message, size_t size);
 
 	private:
 		EventLoop* m_loop;
@@ -50,7 +50,6 @@ namespace net
 		uv_tcp_t m_tcp;
 		uv_connect_t m_connectReq;
 		uv_shutdown_t m_shutdownReq;
-		uv_write_t m_writeReq;
 		Buffer m_buf;
 		ConnectionCallback m_connectionCallback;
 		MessageCallback m_messageCallback;

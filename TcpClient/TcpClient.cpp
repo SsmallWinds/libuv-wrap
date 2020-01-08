@@ -10,21 +10,28 @@ TcpClient::TcpClient(EventLoop* loop, const std::string& name) :
 
 void TcpClient::send(const char* data, int len)
 {
-	//if (m_state != StateE::kConnected)
-	//{
-	//	return;
-	//}
-	StringPiece sp(data, len);
+	//copy memory to buf
+	//uv_write : The cache may not be fully sent 
+	//TODO:: how to optimize?
+	auto* buf = static_cast<char*>(malloc(len));
+	if (buf == nullptr)
+	{
+		return;
+	}
+	memcpy(buf, data, len);
+
 	if (m_loop->isInLoop())
 	{
-		sendInLoop(sp);
+		sendInLoop(buf, len);
 	}
 	else
 	{
-		m_loop->runInLoop(std::bind(&TcpClient::sendInLoop, this, sp.as_string()));
+		m_loop->runInLoop(std::bind(&TcpClient::sendInLoop, this, buf, len));
 	}
 }
 
+
+//not thread safe
 int TcpClient::connect(const char* ip, int port)
 {
 	int ret = 0;
@@ -98,10 +105,13 @@ void TcpClient::onWriteDone(uv_write_t* req, int status)
 	{
 		uv_close(reinterpret_cast<uv_handle_t*>(req->handle), onClose);
 	}
+	//free buf
+	free(req->data);
+	//free req
 	free(req);
 }
 
-void TcpClient::sendInLoop(const StringPiece& message)
+void TcpClient::sendInLoop(const char* message, size_t size)
 {
 	m_loop->assertInLoopThread();
 	if (m_state != StateE::kConnected)
@@ -109,15 +119,26 @@ void TcpClient::sendInLoop(const StringPiece& message)
 		return;
 	}
 	int res = 0;
-	auto* req = static_cast<uv_write_t*>(malloc(sizeof(uv_write_t)));
 	uv_buf_t buf;
-	buf.base = const_cast<char*>(message.data());
-	buf.len = message.size();
+	buf.base = const_cast<char*>(message);
+	buf.len = size;
 
+	auto* req = static_cast<uv_write_t*>(malloc(sizeof(uv_write_t)));
+	if (req == nullptr)
+	{
+		//free buf
+		free(buf.base);
+		return;
+	}
+
+	req->data = buf.base;
 	res = uv_write(req, reinterpret_cast<uv_stream_t*>(&m_tcp), &buf, 1, onWriteDone);
 	if (res != 0)
 	{
 		uv_close(reinterpret_cast<uv_handle_t*>(&m_tcp), onClose);
+		//free buf
+		free(buf.base);
+		//free req
 		free(req);
 	}
 }
