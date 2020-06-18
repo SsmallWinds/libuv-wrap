@@ -1,5 +1,5 @@
 #pragma once
-#include "base/CallBacks.h"
+#include <CallBacks.h>
 #include <map>
 #include <atomic>
 #include <memory>
@@ -14,7 +14,7 @@ namespace net {
 		int64_t timeId;
 		uint64_t timeout;
 		uint64_t repeat;
-		uv_timer_t timer;
+		uv_timer_t uv_timer;
 		TimerCallback cb;
 		TimerQueue* queue;
 	};
@@ -37,7 +37,7 @@ namespace net {
 
 	private:
 		std::map<int64_t, std::unique_ptr<timer>> m_timers;
-		static std::atomic_int64_t s_timerId;
+		static std::atomic<int64_t> s_timerId;
 		EventLoop* m_loop;
 	};
 

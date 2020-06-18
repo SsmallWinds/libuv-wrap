@@ -7,18 +7,22 @@ namespace
 	thread_local net::EventLoop* t_loopInThisThread = 0;
 } // namespace
 
-EventLoop::EventLoop(uv_loop_t* loop) : m_loop(loop), m_async(), m_timer(this)
+EventLoop::EventLoop() : m_loop((uv_loop_t*)malloc(sizeof(uv_loop_t))), m_async(), m_timer(this)
 {
+	uv_loop_init(m_loop);
+}
+
+EventLoop::~EventLoop()
+{
+	if (m_loop != nullptr)
+	{
+		uv_loop_close(m_loop);
+		free(m_loop);
+		m_loop = nullptr;
+	}
 }
 
 int EventLoop::init()
-{
-	int ret = 0;
-	m_async.data = this;
-	return uv_async_init(m_loop, &m_async, onAsync);
-}
-
-void EventLoop::doLoop()
 {
 	if (t_loopInThisThread == 0)
 	{
@@ -28,6 +32,13 @@ void EventLoop::doLoop()
 	{
 		assert(0);
 	}
+	m_async.data = this;
+	return uv_async_init(m_loop, &m_async, onAsync);
+}
+
+void EventLoop::doLoop()
+{
+	init();
 	m_tid = std::this_thread::get_id();
 	uv_run(m_loop, UV_RUN_DEFAULT);
 }
@@ -54,19 +65,27 @@ EventLoop* EventLoop::currentLoop()
 	return t_loopInThisThread;
 }
 
-void net::EventLoop::assertInLoopThread()
+void EventLoop::stop()
 {
-	if (!isInLoop())
-	{
-		//TODO::
-		assert(0);
-	}
+	runInLoop(std::bind(&EventLoop::stopInLoop, this));
 }
 
 void EventLoop::onAsync(uv_async_t* handle)
 {
 	auto* ep = (EventLoop*)handle->data;
 	ep->doQueue();
+}
+
+void EventLoop::walkCallBack(uv_handle_t* handle, void* arg)
+{
+	if (!uv_is_closing(handle)) {
+		uv_close(handle, nullptr);
+	}
+}
+
+void EventLoop::stopInLoop()
+{
+	uv_walk(m_loop, walkCallBack, nullptr);
 }
 
 bool EventLoop::isInLoop()

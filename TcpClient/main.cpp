@@ -47,7 +47,7 @@ void on_connected(const TcpClientPtr& client)
 int main()
 {
 	cout << "hello" << endl;
-	loop = new EventLoop(uv_default_loop());
+	loop = new EventLoop();
 	client = make_shared<TcpClient>(loop);
 
 	client->setMessageCallback(on_msg);
@@ -55,7 +55,6 @@ int main()
 	client->setCloseCallback(on_close);
 
 	client->connect("127.0.0.2", 9999);
-	loop->init();
 	loop->doLoop();
 	getchar();
 }

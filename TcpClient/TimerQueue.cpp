@@ -4,7 +4,7 @@
 using namespace net;
 using namespace std;
 
-std::atomic_int64_t TimerQueue::s_timerId;
+std::atomic<int64_t> TimerQueue::s_timerId;
 
 TimerQueue::TimerQueue(EventLoop* loop) :m_loop(loop)
 {
@@ -42,9 +42,10 @@ void TimerQueue::cancel(int64_t timeId)
 
 void TimerQueue::addTimerInLoop(timer* tm)
 {
-	uv_timer_init(m_loop->uvLoop(), &tm->timer);
-	tm->timer.data = tm;
-	uv_timer_start(&tm->timer, timeHandle, tm->timeout, tm->repeat);
+	m_timers.emplace(std::make_pair(tm->timeId, std::unique_ptr<timer>(tm)));
+	uv_timer_init(m_loop->uvLoop(), &tm->uv_timer);
+	tm->uv_timer.data = tm;
+	uv_timer_start(&tm->uv_timer, timeHandle, tm->timeout, tm->repeat);
 }
 
 void TimerQueue::stopInloop(int64_t timeId)
@@ -55,8 +56,8 @@ void TimerQueue::stopInloop(int64_t timeId)
 		return;
 	}
 
-	uv_timer_stop(&tm->second->timer);
-	uv_close(reinterpret_cast<uv_handle_t*>(&tm->second->timer), timeClose);
+	uv_timer_stop(&tm->second->uv_timer);
+	uv_close(reinterpret_cast<uv_handle_t*>(&tm->second->uv_timer), timeClose);
 }
 
 void TimerQueue::timeHandle(uv_timer_t* handle)

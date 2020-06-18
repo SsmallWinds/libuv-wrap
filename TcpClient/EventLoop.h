@@ -14,22 +14,26 @@ namespace net
 		typedef std::function<void()> Functor;
 
 	public:
-		EventLoop(uv_loop_t* loop);
-		int init();
-
+		EventLoop();
+		~EventLoop();
 		void doLoop();
 		void runInLoop(Functor cb);
 		uv_loop_t* uvLoop();
 		bool isInLoop();
 		static EventLoop* currentLoop();
-		void assertInLoopThread();
+		void assertInLoopThread()
+		{
+			if (!isInLoop())
+			{
+				//TODO::
+			}
+		}
 
-
-		int64_t runAfter(int64_t delay, TimerCallback& cb) 
+		int64_t runAfter(int64_t delay, TimerCallback cb) 
 		{
 			return m_timer.runAfter(delay, cb);
 		}
-		int64_t runEvery(int64_t repeat, TimerCallback& cb) 
+		int64_t runEvery(int64_t repeat, TimerCallback cb) 
 		{
 			return m_timer.runEvery(repeat, cb);
 		}
@@ -38,8 +42,13 @@ namespace net
 			m_timer.cancel(timeId);
 		}
 
+		void stop();
+
 	private:
 		static void onAsync(uv_async_t* handle);
+		static void walkCallBack(uv_handle_t* handle, void* arg);
+		int init();
+		void stopInLoop();
 		void queueInLoop(Functor cb);
 		void doQueue();
 
